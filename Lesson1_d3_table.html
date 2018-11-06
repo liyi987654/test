@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Lora' rel='stylesheet' type='text/css'>
+    <style>
+      table {
+        border-spacing: 0px;
+        font-family: 'Roboto Condensed', serif;
+        font-size: 90%;
+        margin-top: 50px;
+        margin-left: 20%;
+      }
+      th {
+        cursor: pointer;
+      }
+
+      th, td {
+        padding: 2px 10px 2px 5px;
+        text-align: left;
+        border-top: 1px solid #E3E5E6;
+      }
+      .intro{
+        margin-top: 30px;
+      }
+
+      .wrapper{
+        width: 940px;
+        margin: 40px auto 40px auto;
+      }
+
+      h1, h2 {
+        font-family: '宋体';
+      }
+
+      p {
+        font-family: '宋体';
+        font-size: 110%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='wrapper'>
+      <h1>2017美国从全世界及从中国进口商品贸易额</h1>
+      <h2>（按HS二级分类）</h2>
+      <div class="intro">
+        <p>下表按照从中国进口占从全世界进口百分比降序排列。HS二级编码指HS编码前两位。</p>
+        <p>数据来源：UN Comtrade Database   作者：李奕</p>
+      </div>
+    </div><!--wrapper -->
+  </body>
+
+  <!-- lib -->
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.1.0/d3.js"></script>
+  <script type="text/javascript" src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+
+  <!-- js -->
+  <script type="application/javascript">//application和text有什么区别？
+    d3.csv("Import_Information_Of_US.csv", function(error, myData){
+      if (error) throw error;
+      console.log(myData)
+
+      var matrix = [];
+      var allPercentage = [];
+      function toPercent(point){
+        var str=Number(point*100).toFixed(2);
+        str+="%";
+        return str;
+      }  //加百分号的函数
+
+      myData.forEach(function(d, i){
+            d.WorldImport = +d.WorldImport;
+            d.ChinaImport = +d.ChinaImport;
+            d.percentage = (d.ChinaImport / d.WorldImport).toFixed(4);
+            d.percentage = +d.percentage;
+
+            matrix.push([d.ComCode, d.WorldImport, d.ChinaImport, d.percentage]);
+
+            allPercentage.push(d.percentage);
+      });
+
+      matrix.sort(function(a,b){
+        return b[3] - a[3];
+      });
+      // console.log(matrix);
+      // console.log(allPercentage);
+      var colorScale = d3.scaleLinear()
+            .domain(d3.extent(allPercentage))
+            .range(["rgba(10, 72, 189, 0.1)", "rgba(10, 72, 189, 1)"])
+
+
+      var body = d3.select("body");
+      var table = body.append("table");
+      var tablebody = table.append("tbody");
+
+      var tr = table.selectAll("tr")
+            .data(matrix)
+            .enter()
+            .append("tr");
+
+      var td = tr.selectAll("td")
+            .data(function(d) {
+              return d;
+            })
+            .enter()
+            .append("td")
+            .style("background-color", function(d,i) {
+              // 最后一列"percentage"给颜色:
+              if (i === 3) {
+                return colorScale(d);
+              }
+            })
+            .text(function(d,i) {
+              if (i === 3){
+                return toPercent(d);
+              }
+              else {
+                return d;
+              }//加百分号
+            })
+            .style('color', function(d,i){
+              if (i === 0) {
+                return 'grey';
+              }
+            });
+
+      var header = table.append("thead").append("tr");
+      var headerObjs = [
+            { label: "HS编码", sort_type: "string" },
+            { label: "从全世界进口贸易额", sort_type: "int" },
+            { label: "从中国进口贸易额", sort_type: "int" },
+            { label: "中国进口占比", sort_type: "int" },
+      ];
+
+      header
+            .selectAll("th")
+            .data(headerObjs)
+            .enter()
+            .append("th")
+            .attr("data-sort", function(d){ return d.sort_type; })
+            .text(function(d){ return d.label; })
+            .style('color', 'grey');
+
+
+
+    });
+  </script>
+</html>
